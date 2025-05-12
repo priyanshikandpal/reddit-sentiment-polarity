@@ -40,14 +40,6 @@ The sentiment analysis process involves several steps:
 
 4. Polarity Score: A polarity score is assigned to the text based on its sentiment. The polarity score ranges from -1 (negative sentiment) to 1 (positive sentiment).
 
-## Contributing
-Contributions to Reddit Sentiment Polarity are welcome. If you find a bug or have an idea for a new feature, please open an issue or submit a pull request on GitHub.
-
-## License
-Reddit Sentiment Polarity is licensed under the MIT License. See the `LICENSE` file for more information.
-
-Made with ❤️ by Gabriel Santos 👋🏽 [Contact!](https://www.linkedin.com/in/dev-gabriel-santos/)
-
 <p>
 	<a href="https://www.buymeacoffee.com/gabrielsaints">
 		<img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
