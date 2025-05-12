@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Sentiment Analysis Results</title>
+    <!-- Bootstrap CSS for responsive design -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chart-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .comment-card {
+            padding: 10px;
+            border-left: 4px solid;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+        }
+        .comment-positive {
+            border-color: #28a745;
+        }
+        .comment-negative {
+            border-color: #dc3545;
+        }
+        .comment-neutral {
+            border-color: #6c757d;
+        }
+        .summary-card {
+            background-color: #e3f2fd;
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">Reddit Sentiment Analysis Results</h1>   
+        <p><strong>Analysis Model Used:</strong> {{ model }}</p>
+     
+        <!-- Summary Statistics Section -->
+        <div class="chart-container summary-card mb-4">
+            <h2>Analysis Summary</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Topic:</strong> {{ topic }}</p>
+                    <p><strong>Keywords:</strong> {{ key_words }}</p>
+                    <p><strong>Total Comments Analyzed:</strong> {{ total_comments }}</p>
+                    <p><strong>Average Sentiment:</strong> {{ avg_sentiment }} 
+                        {% if avg_sentiment > 0 %}
+                            <span class="text-success">(Positive)</span>
+                        {% elif avg_sentiment < 0 %}
+                            <span class="text-danger">(Negative)</span>
+                        {% else %}
+                            <span class="text-secondary">(Neutral)</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Sentiment Distribution:</strong></p>
+                    <ul>
+                        <li>Positive: {{ positive_count }} ({{ (positive_count/total_comments*100)|round|int }}%)</li>
+                        <li>Negative: {{ negative_count }} ({{ (negative_count/total_comments*100)|round|int }}%)</li>
+                        <li>Neutral: {{ neutral_count }} ({{ (neutral_count/total_comments*100)|round|int }}%)</li>
+                    </ul>
+                    {% if top_keywords %}
+                    <p><strong>Most Common Words:</strong>
+                        {% for word, count in top_keywords %}
+                            {{ word }} ({{ count }}){% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if vader_scores %}
+<h3>VADER Detailed Sentiment Scores (sample)</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Comment</th>
+        <th>Positive</th>
+        <th>Negative</th>
+        <th>Neutral</th>
+        <th>Compound</th>
+    </tr>
+    {% for text, score in zip(texts, vader_scores) %}
+        {% if loop.index <= 5 %}  <!-- Show only first 5 for brevity -->
+        <tr>
+            <td>{{ text[:60] }}{% if text|length > 60 %}...{% endif %}</td>
+            <td>{{ score['pos'] }}</td>
+            <td>{{ score['neg'] }}</td>
+            <td>{{ score['neu'] }}</td>
+            <td>{{ score['compound'] }}</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+</table>
+{% endif %}
+
+        
+        <!-- Download Buttons -->
+        <div class="d-flex justify-content-center mb-4">
+            <a href="/download_csv" class="btn btn-primary me-2">Download Raw Data (CSV)</a>
+            <a href="/download_pdf" class="btn btn-danger">Download Analysis Report (PDF)</a>
+        </div>
+        
+        <!-- Main Charts - Row 1 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Sentiment Distribution</h2>
+                    <p class="chart-description">This bar chart shows the count of positive, negative, and neutral comments found in the analyzed Reddit content.</p>
+                    <img src="{{ bar_graph_path }}" alt="Bar chart showing distribution of positive, negative, and neutral sentiments" class="img-fluid">
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Sentiment vs. Text Length</h2>
+                    <p class="chart-description">This scatter plot shows the relationship between comment length and sentiment score. Each dot represents a comment.</p>
+                    <img src="{{ dispersion_graph_path }}" alt="Scatter plot showing relationship between text length and sentiment score" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Charts - Row 2 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Percentage Distribution</h2>
+                    <p class="chart-description">This pie chart shows the percentage breakdown of positive, negative, and neutral comments.</p>
+                    <img src="{{ pizza_graph_path }}" alt="Pie chart showing percentage distribution of sentiments" class="img-fluid">
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Keyword Frequency</h2>
+                    <p class="chart-description">This heatmap shows how frequently your specified keywords appear in the analyzed comments.</p>
+                    <img src="{{ heatmap_path }}" alt="Heatmap showing frequency of keywords in comments" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Charts - Row 3 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Sentiment Distribution Histogram</h2>
+                    <p class="chart-description">This histogram shows the distribution of sentiment scores across all analyzed comments.</p>
+                    <img src="{{ histogram_path }}" alt="Histogram showing distribution of sentiment scores" class="img-fluid">
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h2>Sentiment Over Time</h2>
+                    <p class="chart-description">This line chart shows how sentiment changes across comments in sequence, revealing potential trends or patterns.</p>
+                    <img src="{{ line_graph_path }}" alt="Line chart showing sentiment trends across comments" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Word Cloud -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h2>Word Cloud</h2>
+                    <p class="chart-description">This word cloud visualizes the most frequently used words in all analyzed comments. Larger words appear more frequently.</p>
+                    <img src="{{ word_cloud_path }}" alt="Word cloud showing most frequent words in comments" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sample Comments Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h2>Sample Comments by Sentiment</h2>
+                    <p class="chart-description">Below are examples of positive, negative, and neutral comments found in the analysis.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3 class="h5 text-success">Positive Comments</h3>
+                            {% if sample_comments['positive'] %}
+                                {% for comment in sample_comments['positive'] %}
+                                    <div class="comment-card comment-positive">
+                                        <p>{{ comment[:150] }}{% if comment|length > 150 %}...{% endif %}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No positive comments found.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h3 class="h5 text-danger">Negative Comments</h3>
+                            {% if sample_comments['negative'] %}
+                                {% for comment in sample_comments['negative'] %}
+                                    <div class="comment-card comment-negative">
+                                        <p>{{ comment[:150] }}{% if comment|length > 150 %}...{% endif %}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No negative comments found.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h3 class="h5 text-secondary">Neutral Comments</h3>
+                            {% if sample_comments['neutral'] %}
+                                {% for comment in sample_comments['neutral'] %}
+                                    <div class="comment-card comment-neutral">
+                                        <p>{{ comment[:150] }}{% if comment|length > 150 %}...{% endif %}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No neutral comments found.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back to Home Button -->
+        <div class="text-center my-4">
+            <a href="/" class="btn btn-secondary">New Analysis</a>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
